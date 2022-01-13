@@ -6,6 +6,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { collection, addDoc } from "firebase/firestore";
 import { firestore } from "../firebase";
+import { storage } from "../firebase";
 
 export default function Signup() {
   const emailRef = useRef();
@@ -18,7 +19,25 @@ export default function Signup() {
   const [loading, setLoading] = useState(false);
   const history = useHistory();
   const [date, setDate] = useState(new Date());
+  const [file, setFile] = useState(null);
+  const [url, setURL] = useState("");
 
+  function handleChange(e) {
+    setFile(e.target.files[0]);
+  }
+  function handleUpload(e) {
+    e.preventDefault();
+    const ref = storage.ref(`/images/${file.name}`);
+    const uploadTask = ref.put(file);
+    uploadTask.on("state_changed", console.log, console.error, () => {
+      ref
+        .getDownloadURL()
+        .then((url) => {
+          setFile(null);
+          setURL(url);
+        });
+    });
+  }
   async function handleSubmit(e) {
     e.preventDefault();
 
@@ -64,11 +83,12 @@ export default function Signup() {
         <Card.Body>
           <h2 className="text-center mb-4">Sign Up</h2>
           {error && <Alert variant="danger">{error}</Alert>}
-          <div className="App">
-          <center>
-          <input type="file"/>
-          <button>Upload</button>
-          </center>
+          <div>
+          <form onSubmit={handleUpload}>
+          <input type="file" onChange={handleChange} />
+          <button disabled={!file}>Upload Image</button>
+          </form>
+          <img src={url} alt="" />
           </div>
           <Form onSubmit={handleSubmit}>
             <Form.Group id="name">
